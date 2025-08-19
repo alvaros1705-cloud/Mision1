@@ -85,6 +85,25 @@ tbody tr:hover{background-color:rgba(255,255,255,.05)}
   .btn{padding:.5rem .75rem;font-size:.875rem}
 }
 
+/* Logo styles */
+.header-logo {
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.header-logo:hover {
+  transform: scale(1.05);
+  filter: brightness(1.1);
+}
+
+/* Light mode logo adjustments */
+body.light .header-logo {
+  filter: brightness(0.9);
+}
+
+body.light .header-logo:hover {
+  filter: brightness(1);
+}
+
 /* Chatbot Styles */
 .chatbot-container {
   position: fixed;
@@ -131,7 +150,7 @@ tbody tr:hover{background-color:rgba(255,255,255,.05)}
   transition: all 0.3s ease;
 }
 
-.chat-interface.hidden {
+.chat-interface.chat-hidden {
   opacity: 0;
   transform: translateY(20px) scale(0.95);
   pointer-events: none;

@@ -372,7 +372,28 @@ function cleanRows(raw) {
     CurrentVer: (r['Current Ver'] || '').trim(),
   })).filter(r => r.App && r.Category); // filtrar vacíos críticos
 
-  const dedup = deduplicateBy(rows, [r => r.App, r => r.Category]);
+  // Filtrar filas con datos obviamente incorrectos (como la fila "1.9" del dataset original)
+  const cleanRows = rows.filter(r => {
+    // Filtrar categorías que son números (errores de datos)
+    if (!isNaN(Number(r.Category)) && r.Category !== '') return false;
+    
+    // Filtrar ratings fuera del rango válido (1-5)
+    if (r.Rating && (r.Rating < 1 || r.Rating > 5)) return false;
+    
+    // Filtrar apps con nombres muy cortos o sospechosos
+    if (r.App.length < 2) return false;
+    
+    return true;
+  });
+
+  // Eliminar duplicados basándose en App y Category
+  const dedup = deduplicateBy(cleanRows, [r => r.App, r => r.Category]);
+  
+  console.log(`Datos originales: ${raw.length} filas`);
+  console.log(`Después de limpieza básica: ${rows.length} filas`);
+  console.log(`Después de filtrado de errores: ${cleanRows.length} filas`);
+  console.log(`Después de eliminación de duplicados: ${dedup.length} filas`);
+  
   return dedup;
 }
 
@@ -381,65 +402,132 @@ function computeAndRenderKPIs(rows) {
   const container = document.getElementById('kpiCards');
   if (!container) return;
   container.innerHTML = '';
+  
+  // KPIs principales más relevantes para Google Play Store
   const totalApps = rows.length;
-  const meanRating = meanBy(rows, r => Number.isFinite(r.Rating) ? r.Rating : NaN);
   const totalInstalls = sumBy(rows, r => r.Installs);
-  const paidCount = rows.filter(r => r.Type === 'Paid').length;
-  const freeCount = rows.filter(r => r.Type !== 'Paid').length;
-  const paidPct = totalApps ? (paidCount / totalApps) * 100 : 0;
-  const categories = new Set(rows.map(r => r.Category)).size;
-  const yearCounts = countBy(rows.filter(r => r.UpdateYear), r => r.UpdateYear);
-  let topYear = '—';
-  if (yearCounts.size) {
-    const arr = Array.from(yearCounts.entries()).sort((a,b) => b[1]-a[1]);
-    topYear = arr[0][0];
-  }
+  const totalReviews = sumBy(rows, r => r.Reviews);
+  
+  // Rating promedio (solo apps con rating válido)
+  const appsWithRating = rows.filter(r => Number.isFinite(r.Rating) && r.Rating > 0);
+  const meanRating = meanBy(appsWithRating, r => r.Rating);
+  
+  // Apps de pago vs gratuitas
+  const paidApps = rows.filter(r => r.Type === 'Paid');
+  const freeApps = rows.filter(r => r.Type !== 'Paid');
+  const paidPercentage = totalApps ? (paidApps.length / totalApps) * 100 : 0;
+  
+  // Categorías únicas
+  const uniqueCategories = new Set(rows.map(r => r.Category)).size;
+  
+  // Apps con mayor número de instalaciones
+  const topInstalls = rows.sort((a, b) => (b.Installs || 0) - (a.Installs || 0)).slice(0, 1)[0];
+  const topAppName = topInstalls ? topInstalls.App : 'N/A';
+  
+  // Apps con mayor rating
+  const topRating = appsWithRating.sort((a, b) => (b.Rating || 0) - (a.Rating || 0)).slice(0, 1)[0];
+  const topRatingApp = topRating ? topRating.App : 'N/A';
+  
+  // Apps con mayor número de reseñas
+  const topReviews = rows.sort((a, b) => (b.Reviews || 0) - (a.Reviews || 0)).slice(0, 1)[0];
+  const topReviewsApp = topReviews ? topReviews.App : 'N/A';
+  
+  // Categoría más popular (por número de apps)
+  const categoryCounts = countBy(rows, r => r.Category);
+  const mostPopularCategory = Array.from(categoryCounts.entries())
+    .sort((a, b) => b[1] - a[1])[0];
+  const topCategoryName = mostPopularCategory ? mostPopularCategory[0] : 'N/A';
+  const topCategoryCount = mostPopularCategory ? mostPopularCategory[1] : 0;
+  
+  // Apps actualizadas recientemente (último año)
+  const currentYear = new Date().getFullYear();
+  const recentUpdates = rows.filter(r => r.UpdateYear === currentYear).length;
+  
+  // Apps premium (de pago) con mayor precio
+  const premiumApps = paidApps.filter(r => r.Price > 0);
+  const avgPremiumPrice = premiumApps.length ? meanBy(premiumApps, r => r.Price) : 0;
+  const mostExpensiveApp = premiumApps.sort((a, b) => (b.Price || 0) - (a.Price || 0))[0];
+  const mostExpensiveAppName = mostExpensiveApp ? mostExpensiveApp.App : 'N/A';
+  
+  // Apps con mayor tamaño
+  const appsWithSize = rows.filter(r => r.SizeMB && r.SizeMB > 0);
+  const avgAppSize = appsWithSize.length ? meanBy(appsWithSize, r => r.SizeMB) : 0;
+  
+  // Apps con requisitos de Android más recientes
+  const appsWithAndroidVer = rows.filter(r => r.AndroidVer && r.AndroidVer > 0);
+  const avgAndroidVer = appsWithAndroidVer.length ? meanBy(appsWithAndroidVer, r => r.AndroidVer) : 0;
 
   const cards = [
-    createCardKPI('Total de apps', formatNumber(totalApps), '📱'),
-    createCardKPI('Rating promedio', meanRating ? meanRating.toFixed(2) : '—', '⭐'),
-    createCardKPI('Instalaciones totales', formatNumber(totalInstalls), '⬇'),
-    createCardKPI('% Apps de pago', `${paidPct.toFixed(1)}%`, '💵'),
-    createCardKPI('Categorías únicas', formatNumber(categories), '🗂'),
-    createCardKPI('Año con más actualizaciones', `${topYear}`, '📅'),
+    createCardKPI('Total de Apps', formatNumber(totalApps), '📱'),
+    createCardKPI('Instalaciones Totales', formatNumber(totalInstalls), '⬇'),
+    createCardKPI('Reseñas Totales', formatNumber(totalReviews), '💬'),
+    createCardKPI('Rating Promedio', meanRating ? meanRating.toFixed(2) : '—', '⭐'),
+    createCardKPI('% Apps de Pago', `${paidPercentage.toFixed(1)}%`, '💵'),
+    createCardKPI('Categorías Únicas', formatNumber(uniqueCategories), '🗂'),
+    createCardKPI('App Más Descargada', topAppName.length > 15 ? topAppName.substring(0, 15) + '...' : topAppName, '🔥'),
+    createCardKPI('App Mejor Calificada', topRatingApp.length > 15 ? topRatingApp.substring(0, 15) + '...' : topRatingApp, '🏆'),
+    createCardKPI('Categoría Más Popular', `${topCategoryName} (${topCategoryCount})`, '📊'),
+    createCardKPI('Apps Actualizadas 2024', formatNumber(recentUpdates), '🔄'),
+    createCardKPI('Precio Promedio Premium', avgPremiumPrice ? `$${avgPremiumPrice.toFixed(2)}` : '—', '💰'),
+    createCardKPI('App Más Cara', mostExpensiveAppName.length > 15 ? mostExpensiveAppName.substring(0, 15) + '...' : mostExpensiveAppName, '💎')
   ];
+  
   for (const c of cards) container.appendChild(c);
-  // animate numerical counters
+  
+  // Animar contadores numéricos
   container.querySelectorAll('[data-counter]').forEach(el => {
     const raw = el.textContent.replace(/[^0-9.]/g, '');
     const target = Number(raw) || 0;
-    animateCounter(el, target);
+    if (target > 0) {
+      animateCounter(el, target);
+    }
   });
 }
 
 // Exportar datos filtrados como CSV
 function exportFilteredData() {
-  if (!STATE.filteredRows.length) return;
-  const headers = ['App', 'Category', 'Rating', 'Reviews', 'Size', 'Installs', 'Type', 'Price', 'Content Rating', 'Genres', 'Last Updated', 'Android Ver', 'Current Ver'];
+  if (!STATE.filteredRows.length) {
+    alert('No hay datos para exportar');
+    return;
+  }
+  
+  const headers = [
+    'App', 'Category', 'Rating', 'Reviews', 'Size (MB)', 'Installs', 
+    'Type', 'Price (USD)', 'Content Rating', 'Genres', 'Last Updated', 
+    'Current Version', 'Android Version'
+  ];
+  
   const csvContent = [
     headers.join(','),
     ...STATE.filteredRows.map(row => [
-      row.App || '',
-      row.Category || '',
+      `"${(row.App || '').replace(/"/g, '""')}"`,
+      `"${(row.Category || '').replace(/"/g, '""')}"`,
       row.Rating || '',
       row.Reviews || '',
-      row.SizeMB ? `${row.SizeMB}MB` : '',
+      row.SizeMB ? row.SizeMB.toFixed(2) : '',
       row.Installs || '',
       row.Type || '',
-      row.Type === 'Paid' ? `$${row.Price}` : '0',
-      row.ContentRating || '',
-      row.Genres || '',
+      row.Type === 'Paid' ? row.Price.toFixed(2) : '0',
+      `"${(row.ContentRating || '').replace(/"/g, '""')}"`,
+      `"${(row.Genres || '').replace(/"/g, '""')}"`,
       row.LastUpdated ? row.LastUpdated.toLocaleDateString() : '',
-      row.AndroidVer || '',
-      row.CurrentVer || ''
+      `"${(row.CurrentVer || '').replace(/"/g, '""')}"`,
+      row.AndroidVer || ''
     ].join(','))
   ].join('\n');
   
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.download = `googleplaystore_filtered_${new Date().toISOString().split('T')[0]}.csv`;
+  link.download = `googleplaystore_${STATE.filteredRows.length}_apps_${new Date().toISOString().split('T')[0]}.csv`;
   link.click();
+  
+  // Mostrar confirmación
+  const notification = document.createElement('div');
+  notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+  notification.textContent = `✅ Exportado ${STATE.filteredRows.length} apps`;
+  document.body.appendChild(notification);
+  setTimeout(() => notification.remove(), 3000);
 }
 
 // Mostrar estadísticas del dataset
@@ -449,23 +537,62 @@ function showDatasetStats() {
     categories: new Set(STATE.cleanRows.map(r => r.Category)).size,
     paid: STATE.cleanRows.filter(r => r.Type === 'Paid').length,
     free: STATE.cleanRows.filter(r => r.Type !== 'Paid').length,
-    avgRating: meanBy(STATE.cleanRows, r => r.Rating),
-    totalInstalls: sumBy(STATE.cleanRows, r => r.Installs)
+    avgRating: meanBy(STATE.cleanRows.filter(r => Number.isFinite(r.Rating) && r.Rating > 0), r => r.Rating),
+    totalInstalls: sumBy(STATE.cleanRows, r => r.Installs),
+    totalReviews: sumBy(STATE.cleanRows, r => r.Reviews),
+    avgPrice: meanBy(STATE.cleanRows.filter(r => r.Type === 'Paid' && r.Price > 0), r => r.Price),
+    avgSize: meanBy(STATE.cleanRows.filter(r => r.SizeMB && r.SizeMB > 0), r => r.SizeMB),
+    avgAndroidVer: meanBy(STATE.cleanRows.filter(r => r.AndroidVer && r.AndroidVer > 0), r => r.AndroidVer)
   };
   
+  // Encontrar la categoría con más apps
+  const categoryCounts = countBy(STATE.cleanRows, r => r.Category);
+  const topCategory = Array.from(categoryCounts.entries()).sort((a, b) => b[1] - a[1])[0];
+  
+  // Encontrar la app más descargada
+  const topApp = STATE.cleanRows.sort((a, b) => (b.Installs || 0) - (a.Installs || 0))[0];
+  
   const statsHtml = `
-    <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
-      <div class="text-center p-3 bg-white/5 rounded-lg">
-        <div class="text-2xl font-bold text-secondary">${formatNumber(stats.total)}</div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+      <div class="text-center p-4 bg-white/5 rounded-lg border border-white/10">
+        <div class="text-3xl font-bold text-secondary">${formatNumber(stats.total)}</div>
         <div class="text-sm text-white/70">Total Apps</div>
+        <div class="text-xs text-white/50 mt-1">${stats.paid} pagas, ${stats.free} gratis</div>
       </div>
-      <div class="text-center p-3 bg-white/5 rounded-lg">
-        <div class="text-2xl font-bold text-accent">${formatNumber(stats.categories)}</div>
+      
+      <div class="text-center p-4 bg-white/5 rounded-lg border border-white/10">
+        <div class="text-3xl font-bold text-accent">${formatNumber(stats.categories)}</div>
         <div class="text-sm text-white/70">Categorías</div>
+        <div class="text-xs text-white/50 mt-1">Top: ${topCategory ? topCategory[0] : 'N/A'}</div>
       </div>
-      <div class="text-center p-3 bg-white/5 rounded-lg">
-        <div class="text-2xl font-bold text-primary">${formatNumber(stats.totalInstalls)}</div>
+      
+      <div class="text-center p-4 bg-white/5 rounded-lg border border-white/10">
+        <div class="text-3xl font-bold text-primary">${formatNumber(stats.totalInstalls)}</div>
         <div class="text-sm text-white/70">Total Installs</div>
+        <div class="text-xs text-white/50 mt-1">${topApp ? topApp.App.substring(0, 20) + '...' : 'N/A'}</div>
+      </div>
+      
+      <div class="text-center p-4 bg-white/5 rounded-lg border border-white/10">
+        <div class="text-3xl font-bold text-yellow-400">${stats.avgRating ? stats.avgRating.toFixed(2) : '—'}</div>
+        <div class="text-sm text-white/70">Rating Promedio</div>
+        <div class="text-xs text-white/50 mt-1">${formatNumber(stats.totalReviews)} reseñas</div>
+      </div>
+    </div>
+    
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+      <div class="text-center p-3 bg-white/5 rounded-lg border border-white/10">
+        <div class="text-xl font-bold text-green-400">${stats.avgPrice ? `$${stats.avgPrice.toFixed(2)}` : '—'}</div>
+        <div class="text-xs text-white/70">Precio Promedio Premium</div>
+      </div>
+      
+      <div class="text-center p-3 bg-white/5 rounded-lg border border-white/10">
+        <div class="text-xl font-bold text-blue-400">${stats.avgSize ? `${stats.avgSize.toFixed(1)}MB` : '—'}</div>
+        <div class="text-xs text-white/70">Tamaño Promedio</div>
+      </div>
+      
+      <div class="text-center p-3 bg-white/5 rounded-lg border border-white/10">
+        <div class="text-xl font-bold text-purple-400">${stats.avgAndroidVer ? stats.avgAndroidVer.toFixed(1) : '—'}</div>
+        <div class="text-xs text-white/70">Android Ver Promedio</div>
       </div>
     </div>
   `;

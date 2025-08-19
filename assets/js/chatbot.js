@@ -80,7 +80,7 @@ class ProyectoMision1Chatbot {
 • **Tailwind CSS**: Framework de utilidades CSS (via CDN)
 • **Fonts**: Inter de Google Fonts para tipografía
 
-Todas las librerías se cargan via CDN con atributo `defer` para optimizar el rendimiento.`
+Todas las librerías se cargan via CDN con atributo defer para optimizar el rendimiento.`
           }
         ]
       },
@@ -236,8 +236,8 @@ Los KPIs se calculan en tiempo real y se muestran con contadores animados para m
 
     if (chatToggle) {
       chatToggle.addEventListener('click', () => {
-        chatInterface.classList.toggle('hidden');
-        if (!chatInterface.classList.contains('hidden')) {
+        chatInterface.classList.toggle('chat-hidden');
+        if (!chatInterface.classList.contains('chat-hidden')) {
           chatInput.focus();
         }
       });
@@ -245,7 +245,7 @@ Los KPIs se calculan en tiempo real y se muestran con contadores animados para m
 
     if (chatClose) {
       chatClose.addEventListener('click', () => {
-        chatInterface.classList.add('hidden');
+        chatInterface.classList.add('chat-hidden');
       });
     }
 
