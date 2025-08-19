@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Insight Apps | Talento Tech IA — Tendencias de Apps en Google Play</title>
+    <meta name="description" content="Limpieza, análisis y visualización interactiva del dataset de Google Play. Proyecto MISIÓN I — Bootcamp IA Talento Tech Oriente, Cúcuta 2025." />
+    <meta name="theme-color" content="#0B1220" />
+    <meta name="author" content="Equipo: Bryan, Andres, Danian, Álvaro" />
+
+    <!-- Open Graph / Twitter -->
+    <meta property="og:title" content="Insight Apps | Talento Tech IA" />
+    <meta property="og:description" content="Tendencias de Apps en Google Play — Dashboard interactivo con Plotly." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="assets/img/favicon.svg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Insight Apps | Talento Tech IA" />
+    <meta name="twitter:description" content="Análisis interactivo del dataset de Google Play." />
+
+    <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg" />
+    <link rel="manifest" href="manifest.webmanifest" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <!-- Tailwind CSS (utility-first) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#2563EB',
+              secondary: '#0EA5E9',
+              accent: '#22C55E',
+              bgdark: '#0B1220',
+              bgsoft: '#0F172A',
+              textmain: '#E5E7EB'
+            },
+            borderRadius: {
+              '2xl': '1rem',
+              '3xl': '1.5rem'
+            },
+            boxShadow: {
+              'soft': '0 10px 25px rgba(0,0,0,0.25)'
+            }
+          }
+        }
+      }
+    </script>
+
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="assets/css/styles.css" />
+
+    <!-- Libraries (defer) -->
+    <script defer src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
+    
+    <!-- App Config -->
+    <script defer src="assets/js/config.js"></script>
+    <script defer src="assets/js/utils.js"></script>
+  </head>
+  <body class="bg-bgdark text-textmain font-['Inter',sans-serif] antialiased">
+    <!-- Navbar -->
+    <header class="fixed top-0 inset-x-0 z-50 backdrop-blur bg-bgdark/80 border-b border-white/10" role="banner">
+      <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Primary">
+        <div class="flex h-16 items-center justify-between">
+          <a href="#inicio" class="flex items-center gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary rounded-xl">
+            <img src="assets/img/favicon.svg" alt="Logo IA" class="w-8 h-8" loading="lazy" />
+            <span class="text-sm sm:text-base font-semibold tracking-wide">Insight Apps | Talento Tech IA</span>
+          </a>
+
+          <div class="flex items-center gap-2">
+            <button id="themeToggle" class="btn btn-ghost" aria-label="Cambiar tema">🌗</button>
+            <button id="navToggle" class="md:hidden btn" aria-label="Abrir menú">☰</button>
+          </div>
+        </div>
+        <div id="navMenu" class="hidden md:flex md:items-center md:justify-between py-2 md:py-0">
+          <div class="flex flex-col md:flex-row gap-2 md:gap-6 py-2 md:py-0" id="scrollspy">
+            <a href="#inicio" class="nav-link">Inicio</a>
+            <a href="#dataset" class="nav-link">Dataset</a>
+            <a href="#kpis" class="nav-link">KPIs</a>
+            <a href="#graficos" class="nav-link">Gráficos</a>
+            <a href="#insights" class="nav-link">Insights</a>
+            <a href="#equipo" class="nav-link">Equipo</a>
+            <a href="#descarga" class="nav-link">Descarga</a>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main id="inicio" class="pt-20">
+      <!-- Hero -->
+      <section class="relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20 grid md:grid-cols-2 gap-10 items-center">
+          <div>
+            <span class="inline-flex items-center px-3 py-1 rounded-full bg-secondary/10 text-secondary text-xs font-semibold">
+              Proyecto IA
+            </span>
+            <h1 class="mt-4 text-3xl md:text-5xl font-extrabold tracking-tight leading-tight">
+              Tendencias de Apps en Google Play
+            </h1>
+            <p class="mt-4 text-base md:text-lg text-white/80 max-w-prose">
+              Limpieza, análisis y visualización interactiva de datos reales de aplicaciones móviles.
+            </p>
+            <div class="mt-6 flex flex-wrap gap-3">
+              <a href="#kpis" class="btn btn-primary" aria-label="Ir a KPIs">Ver KPIs</a>
+              <a href="#graficos" class="btn btn-secondary" aria-label="Ir a gráficos">Explorar gráficos</a>
+            </div>
+            <p class="mt-6 text-sm text-white/60">
+              Metodología: Importar librerías → Cargar datos → Explorar → Revisar nulos → Eliminar duplicados → Corregir inconsistencias → Detectar outliers → Guardar limpios → Visualizar
+            </p>
+          </div>
+          <div class="relative">
+            <div id="lottie-hero" class="w-full h-64 md:h-96"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tabs (mobile) -->
+      <section class="md:hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex gap-2">
+          <button class="tab-btn active" data-target="#dataset">Tabla</button>
+          <button class="tab-btn" data-target="#kpis">KPIs</button>
+          <button class="tab-btn" data-target="#graficos">Gráficos</button>
+        </div>
+      </section>
+
+      <!-- Dataset -->
+      <section id="dataset" class="section">
+        <div class="section-inner">
+          <h2 class="section-title">Dataset</h2>
+          <div class="grid lg:grid-cols-3 gap-6">
+            <article class="card lg:col-span-1">
+              <h3 class="text-lg font-semibold">Columnas clave</h3>
+              <p class="mt-2 text-white/70 text-sm">CSV esperado con las siguientes columnas:</p>
+              <ul class="mt-3 space-y-1 text-sm list-disc list-inside text-white/80">
+                <li>App, Category, Rating, Reviews, Size, Installs, Type, Price</li>
+                <li>Content Rating, Genres, Last Updated, Android Ver, Current Ver</li>
+              </ul>
+              <a class="mt-4 inline-flex text-secondary underline" href="assets/data/googleplaystore.csv" download>Descargar CSV</a>
+              <div class="mt-4">
+                <label for="csvUpload" class="text-xs text-white/70">Cargar CSV manual (fallback):</label>
+                <input id="csvUpload" type="file" accept=".csv" class="mt-1 input" aria-label="Cargar CSV manual" />
+              </div>
+              <div class="mt-4">
+                <button onclick="exportFilteredData()" class="btn btn-accent w-full" aria-label="Exportar datos filtrados">
+                  📊 Exportar CSV filtrado
+                </button>
+              </div>
+            </article>
+
+            <article class="card lg:col-span-2">
+              <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+                <h3 class="text-lg font-semibold">Vista previa (10 filas)</h3>
+                <label class="relative block w-full sm:w-72">
+                  <input id="tableSearch" class="input" type="search" placeholder="Buscar app, categoría..." aria-label="Buscar en la tabla" />
+                  <span class="absolute right-3 top-1/2 -translate-y-1/2 text-white/50">🔎</span>
+                </label>
+              </div>
+              <div class="mt-4 overflow-auto rounded-2xl border border-white/10">
+                <table class="min-w-full text-sm" aria-label="Vista previa del dataset">
+                  <thead class="bg-white/5">
+                    <tr>
+                      <th class="th">App</th>
+                      <th class="th">Category</th>
+                      <th class="th">Rating</th>
+                      <th class="th">Installs</th>
+                      <th class="th">Type</th>
+                      <th class="th">Price</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tableBody" class="divide-y divide-white/5">
+                    <tr><td colspan="6" class="px-4 py-6 text-center text-white/60">Cargando…</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="mt-3 flex items-center justify-between text-xs text-white/70">
+                <div id="pageInfo">Página 1</div>
+                <div class="flex gap-2">
+                  <button id="prevPage" class="btn btn-ghost" aria-label="Página anterior">◀</button>
+                  <button id="nextPage" class="btn btn-ghost" aria-label="Página siguiente">▶</button>
+                </div>
+              </div>
+            </article>
+          </div>
+          
+          <!-- Dataset Stats -->
+          <div id="datasetStats" class="mt-6"></div>
+        </div>
+      </section>
+
+      <!-- KPIs -->
+      <section id="kpis" class="section">
+        <div class="section-inner">
+          <h2 class="section-title">KPIs</h2>
+          <div id="kpiCards" class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4"></div>
+        </div>
+      </section>
+
+      <!-- Gráficos -->
+      <section id="graficos" class="section">
+        <div class="section-inner">
+          <h2 class="section-title">Gráficos</h2>
+          <div class="grid lg:grid-cols-2 gap-6">
+            <!-- 1 -->
+            <article class="card">
+              <div class="flex items-start justify-between">
+                <h3 class="text-lg font-semibold">Top 10 categorías por descargas</h3>
+                <button class="btn btn-ghost download-btn" data-target="chart-1" aria-label="Descargar gráfico 1">⬇ PNG</button>
+              </div>
+              <div id="chart-1" class="chart" role="img" aria-label="Top 10 categorías por descargas"><div class="chart-status">Cargando…</div></div>
+              <div id="insight-1" class="insight"></div>
+            </article>
+
+            <!-- 2 -->
+            <article class="card">
+              <div class="flex items-start justify-between">
+                <h3 class="text-lg font-semibold">Descargas por grupo de edad (Content Rating)</h3>
+                <button class="btn btn-ghost download-btn" data-target="chart-2" aria-label="Descargar gráfico 2">⬇ PNG</button>
+              </div>
+              <div id="chart-2" class="chart" role="img" aria-label="Descargas por grupo de edad"><div class="chart-status">Cargando…</div></div>
+              <div id="insight-2" class="insight"></div>
+            </article>
+
+            <!-- 3 -->
+            <article class="card">
+              <div class="flex items-start justify-between">
+                <h3 class="text-lg font-semibold">Categorías más costosas (Paid)</h3>
+                <button class="btn btn-ghost download-btn" data-target="chart-3" aria-label="Descargar gráfico 3">⬇ PNG</button>
+              </div>
+              <div id="chart-3" class="chart" role="img" aria-label="Categorías más costosas"><div class="chart-status">Cargando…</div></div>
+              <div id="insight-3" class="insight"></div>
+            </article>
+
+            <!-- 4 -->
+            <article class="card">
+              <div class="flex items-start justify-between">
+                <h3 class="text-lg font-semibold">Relación descargas vs reseñas</h3>
+                <button class="btn btn-ghost download-btn" data-target="chart-4" aria-label="Descargar gráfico 4">⬇ PNG</button>
+              </div>
+              <div id="chart-4" class="chart" role="img" aria-label="Relación descargas vs reseñas"><div class="chart-status">Cargando…</div></div>
+              <div id="insight-4" class="insight"></div>
+            </article>
+
+            <!-- 5 -->
+            <article class="card">
+              <div class="flex items-start justify-between">
+                <h3 class="text-lg font-semibold">Número de apps por categoría</h3>
+                <button class="btn btn-ghost download-btn" data-target="chart-5" aria-label="Descargar gráfico 5">⬇ PNG</button>
+              </div>
+              <div id="chart-5" class="chart" role="img" aria-label="Apps por categoría"><div class="chart-status">Cargando…</div></div>
+              <div id="insight-5" class="insight"></div>
+            </article>
+
+            <!-- 6 -->
+            <article class="card">
+              <div class="flex items-start justify-between">
+                <h3 class="text-lg font-semibold">Actualizaciones por año</h3>
+                <button class="btn btn-ghost download-btn" data-target="chart-6" aria-label="Descargar gráfico 6">⬇ PNG</button>
+              </div>
+              <div id="chart-6" class="chart" role="img" aria-label="Actualizaciones por año"><div class="chart-status">Cargando…</div></div>
+              <div id="insight-6" class="insight"></div>
+            </article>
+
+            <!-- 7 -->
+            <article class="card">
+              <div class="flex items-start justify-between">
+                <h3 class="text-lg font-semibold">Distribución de requerimientos de Android</h3>
+                <button class="btn btn-ghost download-btn" data-target="chart-7" aria-label="Descargar gráfico 7">⬇ PNG</button>
+              </div>
+              <div id="chart-7" class="chart" role="img" aria-label="Distribución Android Ver"><div class="chart-status">Cargando…</div></div>
+              <div id="insight-7" class="insight"></div>
+            </article>
+
+            <!-- 8 -->
+            <article class="card">
+              <div class="flex items-start justify-between">
+                <h3 class="text-lg font-semibold">Installs por rangos de precio</h3>
+                <button class="btn btn-ghost download-btn" data-target="chart-8" aria-label="Descargar gráfico 8">⬇ PNG</button>
+              </div>
+              <div id="chart-8" class="chart" role="img" aria-label="Installs por rango de precio"><div class="chart-status">Cargando…</div></div>
+              <div id="insight-8" class="insight"></div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- Insights (texto general) -->
+      <section id="insights" class="section">
+        <div class="section-inner">
+          <h2 class="section-title">Insights</h2>
+          <p class="text-white/80 text-sm">Los siguientes puntos se ajustan automáticamente según el CSV cargado.</p>
+        </div>
+      </section>
+
+      <!-- Equipo -->
+      <section id="equipo" class="section">
+        <div class="section-inner">
+          <h2 class="section-title">Equipo</h2>
+          <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <article class="card team">
+              <img src="assets/img/avatar.svg" alt="Foto genérica de Bryan" class="w-16 h-16 rounded-full" loading="lazy" />
+              <h3 class="mt-3 font-semibold">Bryan Sneider Gelvez Toloza</h3>
+              <p class="text-secondary text-sm">Limpieza de datos</p>
+              <div class="team-links">
+                <a href="#" aria-label="LinkedIn de Bryan">in</a>
+                <a href="#" aria-label="GitHub de Bryan">gh</a>
+                <a href="#" aria-label="Correo de Bryan">@</a>
+              </div>
+            </article>
+            <article class="card team">
+              <img src="assets/img/avatar.svg" alt="Foto genérica de Andres" class="w-16 h-16 rounded-full" loading="lazy" />
+              <h3 class="mt-3 font-semibold">Andres Felipe Jaimes Carrillo</h3>
+              <p class="text-secondary text-sm">Visualización</p>
+              <div class="team-links">
+                <a href="#" aria-label="LinkedIn de Andres">in</a>
+                <a href="#" aria-label="GitHub de Andres">gh</a>
+                <a href="#" aria-label="Correo de Andres">@</a>
+              </div>
+            </article>
+            <article class="card team">
+              <img src="assets/img/avatar.svg" alt="Foto genérica de Danian" class="w-16 h-16 rounded-full" loading="lazy" />
+              <h3 class="mt-3 font-semibold">Danian Raúl Valdés Suárez</h3>
+              <p class="text-secondary text-sm">Análisis</p>
+              <div class="team-links">
+                <a href="#" aria-label="LinkedIn de Danian">in</a>
+                <a href="#" aria-label="GitHub de Danian">gh</a>
+                <a href="#" aria-label="Correo de Danian">@</a>
+              </div>
+            </article>
+            <article class="card team">
+              <img src="assets/img/avatar.svg" alt="Foto genérica de Álvaro" class="w-16 h-16 rounded-full" loading="lazy" />
+              <h3 class="mt-3 font-semibold">Álvaro Salamanca Landínez</h3>
+              <p class="text-secondary text-sm">Desarrollo web</p>
+              <div class="team-links">
+                <a href="#" aria-label="LinkedIn de Álvaro">in</a>
+                <a href="#" aria-label="GitHub de Álvaro">gh</a>
+                <a href="#" aria-label="Correo de Álvaro">@</a>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- Descarga -->
+      <section id="descarga" class="section">
+        <div class="section-inner">
+          <h2 class="section-title">Descarga / Compartir</h2>
+          <p class="text-white/80">Descarga el CSV utilizado o exporta cada gráfica en PNG con el botón respectivo.</p>
+          <a class="btn btn-primary mt-4" href="assets/data/googleplaystore.csv" download aria-label="Descargar CSV">Descargar CSV</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="border-t border-white/10">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-sm text-white/60 flex items-center justify-between">
+        <p>MISIÓN I — Bootcamp IA Talento Tech Oriente, Cúcuta 2025</p>
+        <p>&copy; <span id="yearCopy"></span> Insight Apps</p>
+      </div>
+    </footer>
+
+    <!-- Volver arriba -->
+    <button id="backToTop" class="back-to-top" aria-label="Volver arriba">↑</button>
+
+    <!-- App scripts -->
+    <script defer src="assets/js/app.js"></script>
+    <script defer src="assets/js/charts.js"></script>
+  </body>
+  </html>
+
+
