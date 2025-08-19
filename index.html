@@ -366,9 +366,38 @@
     <!-- Volver arriba -->
     <button id="backToTop" class="back-to-top" aria-label="Volver arriba">↑</button>
 
+    <!-- Chatbot -->
+    <div id="chatbot" class="chatbot-container">
+      <button id="chatToggle" class="chat-toggle" aria-label="Abrir chatbot">💬</button>
+      <div id="chatInterface" class="chat-interface hidden">
+        <div class="chat-header">
+          <h3>🤖 Asistente IA - Proyecto Misión 1</h3>
+          <button id="chatClose" class="chat-close" aria-label="Cerrar chatbot">×</button>
+        </div>
+        <div id="chatMessages" class="chat-messages">
+          <div class="chat-message bot">
+            <div class="message-content">
+              ¡Hola! Soy tu asistente IA para el proyecto de análisis de Google Play Store. 
+              Puedo ayudarte con preguntas sobre:
+              <br>• 📊 Depuración y limpieza de datos
+              <br>• 🌐 Creación de la página web
+              <br>• 📈 Análisis de gráficos y KPIs
+              <br>• 📋 Metodología del proyecto
+              <br><br>¿En qué puedo ayudarte?
+            </div>
+          </div>
+        </div>
+        <div class="chat-input-container">
+          <input id="chatInput" type="text" placeholder="Escribe tu pregunta..." class="chat-input" />
+          <button id="chatSend" class="chat-send" aria-label="Enviar mensaje">➤</button>
+        </div>
+      </div>
+    </div>
+
     <!-- App scripts -->
     <script defer src="assets/js/app.js"></script>
     <script defer src="assets/js/charts.js"></script>
+    <script defer src="assets/js/chatbot.js"></script>
   </body>
   </html>
 
